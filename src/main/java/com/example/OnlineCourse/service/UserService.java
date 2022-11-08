@@ -8,4 +8,7 @@ public interface UserService {
     User saveUser(String name,Long chatId);
     User findById(Long chatId);
     List<User> getAll();
+    List<User> getAllAdmin();
+
+
 }

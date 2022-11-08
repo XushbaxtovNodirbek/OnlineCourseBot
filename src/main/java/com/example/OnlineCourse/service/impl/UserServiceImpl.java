@@ -34,6 +34,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getAll() {
-        return null;
+        return userRepository.findAll();
     }
+
+    @Override
+    public List<User> getAllAdmin() {
+        return userRepository.findAllByRole("ADMIN");
+    }
+
+    public void changeStep(Long chatId,String step){
+        User user=findById(chatId);
+        user.setStep(step);
+        userRepository.save(user);
+    }
+
+    public void changeRole(Long chatId,String role){
+        User user=findById(chatId);
+        user.setRole(role);
+        userRepository.save(user);
+    }
+
 }

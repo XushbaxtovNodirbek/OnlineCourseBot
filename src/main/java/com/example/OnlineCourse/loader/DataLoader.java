@@ -24,8 +24,8 @@ public class DataLoader implements CommandLineRunner {
         try {
             if (init.equals("create") || init.equals("create-drop")) {
                 User user=User.builder()
-                        .role("OWENER")
-                        .name("NODIRBEK")
+                        .role("OWNER")
+                        .name("Nodirbek")
                         .chatId(5094739326L)
                         .step("START")
                         .build();
