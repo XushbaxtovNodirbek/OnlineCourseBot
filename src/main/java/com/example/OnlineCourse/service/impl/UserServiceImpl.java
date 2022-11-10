@@ -50,6 +50,7 @@ public class UserServiceImpl implements UserService {
 
     public void changeRole(Long chatId,String role){
         User user=findById(chatId);
+        user.setChatId(chatId);
         user.setRole(role);
         userRepository.save(user);
     }

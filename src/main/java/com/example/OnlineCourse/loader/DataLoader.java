@@ -18,7 +18,8 @@ public class DataLoader implements CommandLineRunner {
 
     @Value("${spring.jpa.hibernate.ddl-auto}")
     String init;   // update
-
+    @Value("${spring.owner.chatId}")
+    Long ownerChatId;
     @Override
     public void run(String... args) throws Exception {
         try {
@@ -26,7 +27,7 @@ public class DataLoader implements CommandLineRunner {
                 User user=User.builder()
                         .role("OWNER")
                         .name("Nodirbek")
-                        .chatId(5094739326L)
+                        .chatId(ownerChatId)
                         .step("START")
                         .build();
                 userRepository.save(user);
