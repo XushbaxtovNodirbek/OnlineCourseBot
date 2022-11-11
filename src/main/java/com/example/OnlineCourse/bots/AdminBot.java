@@ -30,18 +30,25 @@ import java.util.List;
 public class AdminBot extends TelegramLongPollingBot {
     @Value("${spring.owner.chatId}")
     private Long ownerId;
+
+    @Value("${spring.adminBot.username}")
+    private String adminBotUsername;
+
+    @Value("${spring.adminBot.token}")
+    private String token;
+
     private final UserServiceImpl userService;
     private final AdminTmpServiceImp adminTmpService;
     private final CourseServiceImpl courseService;
 
     @Override
     public String getBotUsername() {
-        return "course_admin_xn_bot";
+        return adminBotUsername;
     }
 
     @Override
     public String getBotToken() {
-        return "5794147566:AAGqUS0at3aZ7YKNGStvYPmeezaAOQtuTBI";
+        return token;
     }
 
     @Override
