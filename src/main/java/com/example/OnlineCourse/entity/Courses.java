@@ -24,7 +24,7 @@ public class Courses implements Serializable {
     String name;
     String description;
 
-    @OneToMany
+    @OneToMany(fetch = FetchType.EAGER)
     List<Videos> videosList;
 
     @CreationTimestamp

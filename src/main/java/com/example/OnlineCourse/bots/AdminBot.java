@@ -63,6 +63,7 @@ public class AdminBot extends TelegramLongPollingBot {
                         case "START" -> {
                             switch (text) {
                                 case "/start" -> {
+                                    deleteMessage(chatId,message.getMessageId()-1);
                                     String message1 = "Assalomu alaykum " + message.getChat().getFirstName() + ".\nAmallardan birini tanlang:";
                                     sendMessageWithInlineKeyboard(message1,
                                             inlineKeyboardMarkup("Adminlar ro'yxati", "Admin qo'shish"), chatId);
@@ -79,6 +80,15 @@ public class AdminBot extends TelegramLongPollingBot {
                                     }
 
                                 }
+                            }
+                        }
+                        default -> {
+                            if (text.equals("/start")){
+                                deleteMessage(chatId,message.getMessageId()-1);
+                                sendMessageWithInlineKeyboard("Bosh sahifa",
+                                        inlineKeyboardMarkup("Adminlar ro'yxati", "Admin qo'shish"),
+                                        chatId);
+                                userService.changeStep(chatId,"START");
                             }
                         }
                     }
@@ -147,9 +157,8 @@ public class AdminBot extends TelegramLongPollingBot {
                                 } else {
                                     deleteMessage(chatId, message.getMessageId());
                                     for (User user1 : adminList) {
-                                        sendMessageWithInlineKeyboard(user1.getName()
-                                                , inlineKeyboardMarkup("O'chirish", user1.getChatId())
-                                                , chatId);
+                                        sendMessageWithInlineKeyboard(user1.getName(),inlineKeyboardMarkup("O'chirish",
+                                                user1.getChatId()),chatId);
                                     }
                                     userService.changeStep(chatId, "EDIT_ADMIN");
                                 }
@@ -229,26 +238,35 @@ public class AdminBot extends TelegramLongPollingBot {
                                 userService.changeRole(Long.parseLong(data.substring(1)), "ADMIN");
                                 adminTmpService.deleteTmp(Long.parseLong(data.substring(1)));
                             }
+                            case "-"->{
+                                deleteMessage(chatId, message.getMessageId());
+                                sendMessageWithInlineKeyboard(adminTmpService
+                                                .findByChatId(Long.parseLong(data.substring(1))).getName() + "O'chirildi",
+                                        inlineKeyboardMarkup("Adminlar ro'yxati", "Admin qo'shish"), chatId);
+                                adminTmpService.deleteTmp(Long.parseLong(data.substring(1)));
+                                userService.changeStep(chatId, "START");
+                            }
                         }
                     }
                 }
             }
             //Admin service
-            else {
+            else if(user.getRole().equals("ADMIN")){
+                System.out.println(data);
                 switch (user.getStep()){
                     case "START"->{
                         switch (data){
                             case "firstButton"->{
+                                System.out.println(1);
                                 if (courseService.getAllCourse().isEmpty()){
                                     sendMessageWithInlineKeyboard("Hozirda kurslar mavjud emas.",
                                             inlineKeyboardMarkup("Kurs qo'shish"),chatId);
                                     userService.changeStep(chatId,"ADD_COURSE");
                                 }else {
-                                    for (Courses courses : courseService.getAllCourse()) {
-                                        sendMessageWithInlineKeyboard("Kurslar ro'yxati",
-                                                sendListCourse(courseService.getAllCourse()),
-                                                chatId);
-                                    }
+                                    List<Courses>list=courseService.getAllCourse();
+                                    System.out.println(list);
+                                        sendMessageWithInlineKeyboard("Kurslar",sendListCourse(list),chatId);
+
                                 }
                             }
                             case "secondButton"->{
@@ -337,23 +355,34 @@ public class AdminBot extends TelegramLongPollingBot {
     {
         InlineKeyboardMarkup inlineKeyboardMarkup=new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        List<InlineKeyboardButton> row;
-        InlineKeyboardButton button;
-        //buttons
+
         for (Courses cours : courses) {
-            row = new ArrayList<>();
-            button=new InlineKeyboardButton();
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            InlineKeyboardButton button=new InlineKeyboardButton();
             button.setCallbackData(cours.getId().toString());
             button.setText(cours.getName());
             row.add(button);
             keyboard.add(row);
         }
-        row=new ArrayList<>();
-        button=new InlineKeyboardButton();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        InlineKeyboardButton button=new InlineKeyboardButton();
+        button.setCallbackData("b");
         button.setText("Orqaga");
-        button.setText("b");
         row.add(button);
         keyboard.add(row);
+
+        row = new ArrayList<>();
+        button=new InlineKeyboardButton();
+        button.setCallbackData("+");
+        button.setText("Kurs qo'shish");
+        row.add(button);
+        keyboard.add(row);
+//        List<InlineKeyboardButton> row=new ArrayList<>();
+//        InlineKeyboardButton button=new InlineKeyboardButton();
+//        button.setText("Orqaga");
+//        button.setText("b");
+//        row.add(button);
+//        keyboard.add(row);
 
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
@@ -464,5 +493,7 @@ public class AdminBot extends TelegramLongPollingBot {
             throw new RuntimeException(e);
         }
     }
+
+
 
 }

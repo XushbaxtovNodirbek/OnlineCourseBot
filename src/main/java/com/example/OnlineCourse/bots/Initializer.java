@@ -1,5 +1,6 @@
 package com.example.OnlineCourse.bots;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -8,16 +9,12 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @Component
+@RequiredArgsConstructor
 public class Initializer {
     final
     UserBot bot;
     final
     AdminBot adminBot;
-
-    public Initializer(UserBot bot,AdminBot adminBot) {
-        this.bot = bot;
-        this.adminBot=adminBot;
-    }
 
     @EventListener({ContextRefreshedEvent.class})
     public void init(){
