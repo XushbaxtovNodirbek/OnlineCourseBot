@@ -22,7 +22,6 @@ public class Videos implements Serializable {
 
     @Id
     String fileId;
-    String name;
     String caption;
 
     @CreationTimestamp

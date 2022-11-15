@@ -1,11 +1,10 @@
-package com.example.OnlineCourse.bots;
+package com.example.OnlineCourse.bots.Admin.bot;
 
-import com.example.OnlineCourse.entity.AdminTmp;
-import com.example.OnlineCourse.entity.Courses;
-import com.example.OnlineCourse.entity.User;
+import com.example.OnlineCourse.entity.*;
 import com.example.OnlineCourse.service.impl.AdminTmpServiceImp;
 import com.example.OnlineCourse.service.impl.CourseServiceImpl;
 import com.example.OnlineCourse.service.impl.UserServiceImpl;
+import com.example.OnlineCourse.service.impl.VideoServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import javax.persistence.Cache;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +38,7 @@ public class AdminBot extends TelegramLongPollingBot {
     private String token;
 
     private final UserServiceImpl userService;
+    private final VideoServiceImpl videoService;
     private final AdminTmpServiceImp adminTmpService;
     private final CourseServiceImpl courseService;
 
@@ -70,7 +71,7 @@ public class AdminBot extends TelegramLongPollingBot {
                         case "START" -> {
                             switch (text) {
                                 case "/start" -> {
-                                    deleteMessage(chatId,message.getMessageId()-1);
+                                    deleteMessage(chatId, message.getMessageId() - 1);
                                     String message1 = "Assalomu alaykum " + message.getChat().getFirstName() + ".\nAmallardan birini tanlang:";
                                     sendMessageWithInlineKeyboard(message1,
                                             inlineKeyboardMarkup("Adminlar ro'yxati", "Admin qo'shish"), chatId);
@@ -90,12 +91,12 @@ public class AdminBot extends TelegramLongPollingBot {
                             }
                         }
                         default -> {
-                            if (text.equals("/start")){
-                                deleteMessage(chatId,message.getMessageId()-1);
+                            if (text.equals("/start")) {
+                                deleteMessage(chatId, message.getMessageId() - 1);
                                 sendMessageWithInlineKeyboard("Bosh sahifa",
                                         inlineKeyboardMarkup("Adminlar ro'yxati", "Admin qo'shish"),
                                         chatId);
-                                userService.changeStep(chatId,"START");
+                                userService.changeStep(chatId, "START");
                             }
                         }
                     }
@@ -113,29 +114,37 @@ public class AdminBot extends TelegramLongPollingBot {
                             AdminTmp adminTmp = new AdminTmp(user.getName(),
                                     message.getChat().getUserName(),
                                     user.getChatId());
-                                if (!checkAdmin(adminTmpService.getAll(),adminTmp)) {
-                                    String txt = "Arizangiz moderatorga yuborildi.Arizangiz qabul qilinishi bilan sizga habar beramiz;)";
-                                    sendMessage(txt, chatId);
-                                    adminTmpService.saveAdminTmp(adminTmp.getName(), adminTmp.getUserName(), chatId);
-                                    txt = "Yangi ariza!\nAdmin ismi : " + user.getName() + "\nAdmin foydalanuvchi nomi : @" + message.getChat().getUserName();
-                                    sendMessageWithInlineKeyboard(txt, sendOwner(chatId), ownerId);
-                                }else {
-                                    sendMessage("Siz ariza yuborgansiz iltimos javobni kuting",chatId);
-                                }
+                            if (!checkAdmin(adminTmpService.getAll(), adminTmp)) {
+                                String txt = "Arizangiz moderatorga yuborildi.Arizangiz " +
+                                        "qabul qilinishi bilan sizga habar beramiz;)";
+                                sendMessage(txt, chatId);
+                                adminTmpService.saveAdminTmp(adminTmp.getName(), adminTmp.getUserName(), chatId);
+                                txt = "Yangi ariza!\nAdmin ismi : " + user.getName() + "\nAdmin foydalanuvchi nomi : @" + message.getChat().getUserName();
+                                sendMessageWithInlineKeyboard(txt, sendOwner(chatId), ownerId);
+                            } else {
+                                sendMessage("Siz ariza yuborgansiz iltimos javobni kuting", chatId);
+                            }
                         }
                         default -> {
-                            sendMessage("Iltimos berilgan tugmalar yoki belgilardan foydalaning",chatId);
+                            sendMessage("Iltimos berilgan tugmalar yoki belgilardan foydalaning", chatId);
                         }
                     }
                 }
             }
             //Admin service
             else {
-                if (message.hasText()){
-                    String text= message.getText();
-                    if (text.equals("/start")){
-                        String txt="\nAssalomu alaykum "+user.getName()+".\nAmallardan birini tanlang.";
-                        sendMessageWithInlineKeyboard(txt,inlineKeyboardMarkup("Video dars joylash","E'lon berish"),chatId);
+                if (message.hasText()) {
+                    String text = message.getText();
+                    if (text.equals("/start")) {
+                        String txt = "\nAssalomu alaykum " + user.getName() + ".\nAmallardan birini tanlang.";
+                        sendMessageWithInlineKeyboard(txt, inlineKeyboardMarkup("Video dars joylash", "E'lon berish"), chatId);
+                    }
+                }
+                else if(message.hasVideo()){
+                    switch (user.getStep()){
+                        case "UPLOAD_VIDEO"->{
+//                            String
+                        }
                     }
                 }
             }
@@ -164,8 +173,8 @@ public class AdminBot extends TelegramLongPollingBot {
                                 } else {
                                     deleteMessage(chatId, message.getMessageId());
                                     for (User user1 : adminList) {
-                                        sendMessageWithInlineKeyboard(user1.getName(),inlineKeyboardMarkup("O'chirish",
-                                                user1.getChatId()),chatId);
+                                        sendMessageWithInlineKeyboard(user1.getName(), inlineKeyboardMarkup("O'chirish",
+                                                user1.getChatId()), chatId);
                                     }
                                     userService.changeStep(chatId, "EDIT_ADMIN");
                                 }
@@ -245,7 +254,7 @@ public class AdminBot extends TelegramLongPollingBot {
                                 userService.changeRole(Long.parseLong(data.substring(1)), "ADMIN");
                                 adminTmpService.deleteTmp(Long.parseLong(data.substring(1)));
                             }
-                            case "-"->{
+                            case "-" -> {
                                 deleteMessage(chatId, message.getMessageId());
                                 sendMessageWithInlineKeyboard(adminTmpService
                                                 .findByChatId(Long.parseLong(data.substring(1))).getName() + "O'chirildi",
@@ -258,29 +267,77 @@ public class AdminBot extends TelegramLongPollingBot {
                 }
             }
             //Admin service
-            else if(user.getRole().equals("ADMIN")){
+            else if (user.getRole().equals("ADMIN")) {
                 System.out.println(data);
-                switch (user.getStep()){
-                    case "START"->{
-                        switch (data){
-                            case "firstButton"->{
-                                System.out.println(1);
-                                if (courseService.getAllCourse().isEmpty()){
+                switch (user.getStep()) {
+                    case "START" -> {
+                        switch (data) {
+                            case "firstButton" -> {
+                                if (courseService.getAllCourse().isEmpty()) {
                                     sendMessageWithInlineKeyboard("Hozirda kurslar mavjud emas.",
-                                            inlineKeyboardMarkup("Kurs qo'shish"),chatId);
-                                    userService.changeStep(chatId,"ADD_COURSE");
-                                }else {
-                                    List<Courses>list=courseService.getAllCourse();
+                                            inlineKeyboardMarkup("Kurs qo'shish"), chatId);
+                                    userService.changeStep(chatId, "VIEW_COURSE");
+                                } else {
+                                    List<Courses> list = courseService.getAllCourse();
                                     System.out.println(list);
-                                        sendMessageWithInlineKeyboard("Kurslar",sendListCourse(list),chatId);
-
+                                    sendMessageWithInlineKeyboard("Kurslar", sendListCourse(list), chatId);
+                                    userService.changeStep(chatId,"VIEW_COURSE");
                                 }
                             }
-                            case "secondButton"->{
+                            case "secondButton" -> {
 
                             }
                         }
                     }
+                    case "VIEW_COURSE"->{
+                        switch (data){
+                            case "+"->{
+                                //add course
+                            }
+                            case "b"->{
+                                String txt =user.getName() + ".\nAmallardan birini tanlang.";
+                                sendMessageWithInlineKeyboard(txt, inlineKeyboardMarkup("Video dars joylash", "E'lon berish"), chatId);
+                                userService.changeStep(chatId,"START");
+                            }
+                            default -> {
+                                Courses course=courseService.findById(Long.parseLong(data));
+                                if (course!=null){
+                                    String txt="Kurs nomi: "+course.getName()+
+                                            "\nQo'shimcha ma'lumot: "+course.getDescription();
+                                    sendMessageWithInlineKeyboard(txt,CRUD_Course("Kursni o'chirish","Video Yukash",data),chatId);
+                                    userService.changeStep(chatId,"EDIT_COURSE");
+                                }
+                            }
+                        }
+                    }
+                    case "EDIT_COURSE"->{
+                        switch (data.substring(0,1)){
+                            case "b"->{
+                                List<Courses> list = courseService.getAllCourse();
+                                System.out.println(list);
+                                sendMessageWithInlineKeyboard("Kurslar", sendListCourse(list), chatId);
+                                userService.changeStep(chatId,"VIEW_COURSE");
+                            }
+                            case "d"->{
+                                Courses course=courseService.findById(Long.parseLong(data.substring(1)));
+                                for (Lessons lessons : course.getLessonList()) {
+                                    Videos video = lessons.getVideo();
+                                    videoService.delete(video);
+                                }
+                                courseService.delete(course.getId());
+                                List<Courses> list = courseService.getAllCourse();
+                                System.out.println(list);
+                                sendMessageWithInlineKeyboard("Kurs o'chirildi", sendListCourse(list), chatId);
+                                userService.changeStep(chatId,"VIEW_COURSE");
+                            }
+                            case "u"->{
+                                sendMessage("Marhamat yangi video yuklashingiz mumkin iltimos video tagida izoh " +
+                                        "yozish yodingizdan chiqmasin",chatId,data);
+                                userService.changeStep(chatId,"UPLOAD_VIDEO");
+                            }
+                        }
+                    }
+
                 }
             }
 
@@ -357,40 +414,56 @@ public class AdminBot extends TelegramLongPollingBot {
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
     }
-    //send list courses
-    public InlineKeyboardMarkup sendListCourse(List<Courses> courses)
-    {
-        InlineKeyboardMarkup inlineKeyboardMarkup=new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        for (Courses cours : courses) {
-            List<InlineKeyboardButton> row = new ArrayList<>();
+    //send list courses
+    public InlineKeyboardMarkup sendListCourse(List<Courses> courses) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        for (int i = 0; i < courses.size(); i++) {
             InlineKeyboardButton button=new InlineKeyboardButton();
-            button.setCallbackData(cours.getId().toString());
-            button.setText(cours.getName());
+            button.setText(courses.get(i).getName());
+            button.setCallbackData(courses.get(i).getId().toString());
+            row.add(button);
+            if ((i+1)%2==0){
+                keyboard.add(row);
+                row=new ArrayList<>();
+            }
+        }
+        row=new ArrayList<>();
+        if (courses.size()%2==1){
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setCallbackData(courses.get(courses.size()-1).getId().toString());
+            button.setText(courses.get(courses.size()-1).getName());
+            row.add(button);
+
+            button = new InlineKeyboardButton();
+            button.setCallbackData("b");
+            button.setText("Orqaga");
+            row.add(button);
+            keyboard.add(row);
+
+            row = new ArrayList<>();
+            button = new InlineKeyboardButton();
+            button.setCallbackData("+");
+            button.setText("Kurs qo'shish");
+            row.add(button);
+            keyboard.add(row);
+
+
+        }else {
+            row = new ArrayList<>();
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setCallbackData("b");
+            button.setText("Orqaga");
+            row.add(button);
+
+            button = new InlineKeyboardButton();
+            button.setCallbackData("+");
+            button.setText("Kurs qo'shish");
             row.add(button);
             keyboard.add(row);
         }
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        InlineKeyboardButton button=new InlineKeyboardButton();
-        button.setCallbackData("b");
-        button.setText("Orqaga");
-        row.add(button);
-        keyboard.add(row);
-
-        row = new ArrayList<>();
-        button=new InlineKeyboardButton();
-        button.setCallbackData("+");
-        button.setText("Kurs qo'shish");
-        row.add(button);
-        keyboard.add(row);
-//        List<InlineKeyboardButton> row=new ArrayList<>();
-//        InlineKeyboardButton button=new InlineKeyboardButton();
-//        button.setText("Orqaga");
-//        button.setText("b");
-//        row.add(button);
-//        keyboard.add(row);
-
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
     }
@@ -487,9 +560,10 @@ public class AdminBot extends TelegramLongPollingBot {
             throw new RuntimeException(e);
         }
     }
+
     //send only text
-    public void sendMessage(String text,Long chatId){
-        SendMessage sendMessage=new SendMessage();
+    public void sendMessage(String text, Long chatId) {
+        SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(text);
         sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
@@ -500,7 +574,46 @@ public class AdminBot extends TelegramLongPollingBot {
             throw new RuntimeException(e);
         }
     }
+    //WITH BACK BUTTON
+    public InlineKeyboardMarkup CRUD_Course(String firstButton, String secondText,String data) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        //First button
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText(firstButton);
+        button.setCallbackData("d"+data);
+        row.add(button);
+        //Second button
+        button = new InlineKeyboardButton();
+        button.setText(secondText);
+        button.setCallbackData("u"+data);
+        row.add(button);
+        keyboard.add(row);
+        //back button
+        row=new ArrayList<>();
+        button=new InlineKeyboardButton();
+        button.setCallbackData("b");
+        button.setText("Orqaga");
+        row.add(button);
+        keyboard.add(row);
+        inlineKeyboardMarkup.setKeyboard(keyboard);
+        return inlineKeyboardMarkup;
+    }
+    //for upload video
+    public String sendMessage(String text, Long chatId,String data) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        sendMessage.setText(text);
+        sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
 
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+        return data;
+    }
 
 
 }

@@ -1,4 +1,4 @@
-package com.example.OnlineCourse.bots;
+package com.example.OnlineCourse.bots.User.bot;
 
 import com.example.OnlineCourse.config.BotConfig;
 import com.example.OnlineCourse.service.UserService;

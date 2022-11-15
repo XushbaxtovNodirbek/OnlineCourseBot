@@ -1,5 +1,7 @@
 package com.example.OnlineCourse.bots;
 
+import com.example.OnlineCourse.bots.Admin.bot.AdminBot;
+import com.example.OnlineCourse.bots.User.bot.UserBot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
