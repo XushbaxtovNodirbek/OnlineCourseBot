@@ -1,9 +1,12 @@
 package com.example.OnlineCourse.service.impl;
 
 import com.example.OnlineCourse.entity.Courses;
+import com.example.OnlineCourse.entity.Lessons;
 import com.example.OnlineCourse.entity.Videos;
 import com.example.OnlineCourse.repository.CourseRepository;
+import com.example.OnlineCourse.repository.LessonRepository;
 import com.example.OnlineCourse.repository.VideoRepository;
+import com.example.OnlineCourse.service.LessonService;
 import com.example.OnlineCourse.service.VideoService;
 
 import lombok.RequiredArgsConstructor;
@@ -16,20 +19,19 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class VideoServiceImpl implements VideoService {
-    private final CourseRepository courseRepository;
+    private final LessonServiceImpl lessonService;
+    private final LessonRepository lessonRepository;
     private final VideoRepository videoRepository;
     @Override
-    public boolean save(String fileId, String caption, Long courseId) {
-        Courses course=courseRepository.getById(courseId);
-        List<Videos> videosList = course.getVideosList();
-        Videos video=Videos.builder()
-                .fileId(fileId)
+    public boolean save(String fileId, String caption, Long lessonId) {
+        Lessons lesson=lessonService.findById(lessonId);
+        Videos video= Videos.builder()
                 .caption(caption)
+                .fileId(fileId)
                 .build();
         videoRepository.save(video);
-        videosList.add(video);
-        course.setVideosList(videosList);
-        courseRepository.save(course);
+        lesson.setVideo(video);
+        lessonRepository.save(lesson);
         return true;
     }
 
